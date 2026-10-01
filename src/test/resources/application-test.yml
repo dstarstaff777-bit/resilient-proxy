@@ -1,0 +1,21 @@
+resilience4j:
+  circuitbreaker:
+    instances:
+      orders:
+        waitDurationInOpenState: 1s
+      notifications:
+        waitDurationInOpenState: 1s
+  bulkhead:
+    instances:
+      orders:
+        maxConcurrentCalls: 50
+      notifications:
+        maxConcurrentCalls: 50
+  ratelimiter:
+    instances:
+      orders:
+        limitForPeriod: 50
+        limitRefreshPeriod: 1s
+      notifications:
+        limitForPeriod: 50
+        limitRefreshPeriod: 1s

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Circuit Breaker Dashboard</title>
+    <style>
+        body { font-family: sans-serif; max-width: 720px; margin: 40px auto; }
+        .panel { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-bottom: 20px; }
+        .state { font-size: 24px; font-weight: bold; padding: 8px 16px; border-radius: 8px; display: inline-block; }
+        .CLOSED { background: #d4edda; color: #155724; }
+        .OPEN { background: #f8d7da; color: #721c24; }
+        .HALF_OPEN { background: #fff3cd; color: #856404; }
+        #log { margin-top: 24px; font-family: monospace; font-size: 13px; white-space: pre-line; }
+        button { padding: 6px 12px; margin-right: 8px; margin-top: 8px; cursor: pointer; }
+    </style>
+</head>
+<body>
+<h2>Circuit Breaker Dashboard — два независимых downstream</h2>
+
+<div class="panel">
+    <h3>orders <span id="state-orders" class="state CLOSED">CLOSED</span></h3>
+    <button onclick="setChaos('orders', 0)">failureRate = 0%</button>
+    <button onclick="setChaos('orders', 80)">failureRate = 80%</button>
+    <button onclick="callProxy('orders')">GET /proxy/orders</button>
+</div>
+
+<div class="panel">
+    <h3>notifications <span id="state-notifications" class="state CLOSED">CLOSED</span></h3>
+    <button onclick="setChaos('notifications', 0)">failureRate = 0%</button>
+    <button onclick="setChaos('notifications', 80)">failureRate = 80%</button>
+    <button onclick="callProxy('notifications')">GET /proxy/notifications</button>
+</div>
+
+<div id="log"></div>
+
+<script>
+    const logEl = document.getElementById('log');
+
+    function setChaos(name, rate) {
+        fetch(`/downstream/${name}/chaos?failureRate=${rate}`, { method: 'POST' });
+    }
+
+    function callProxy(name) {
+        fetch(`/proxy/${name}`)
+            .then(r => r.text())
+            .then(text => appendLog(`proxy/${name} -> ${text}`));
+    }
+
+    function appendLog(line) {
+        logEl.textContent = `[${new Date().toLocaleTimeString()}] ${line}\n` + logEl.textContent;
+    }
+
+    const source = new EventSource('/monitoring/events');
+    source.onmessage = (e) => {
+        const event = JSON.parse(e.data);
+        const stateEl = document.getElementById(`state-${event.breakerName}`);
+        if (stateEl) {
+            stateEl.textContent = event.toState;
+            stateEl.className = 'state ' + event.toState;
+        }
+        appendLog(`[${event.breakerName}] ${event.fromState} -> ${event.toState}`);
+    };
+</script>
+</body>
+</html>
