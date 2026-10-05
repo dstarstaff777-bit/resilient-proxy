@@ -4,6 +4,15 @@ server:
 downstream:
   url: http://localhost:8080
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,circuitbreakers,circuitbreakerevents,ratelimiters,bulkheads
+  endpoint:
+    health:
+      show-details: always
+
 resilience4j:
   circuitbreaker:
     instances:
@@ -64,5 +73,7 @@ resilience4j:
           timeoutDuration: 0
 
 logging:
+  pattern:
+    console: "%d{HH:mm:ss.SSS} %-5level [%X{requestId:-no-id}] %logger{36} - %msg%n"
   level:
     io.github.resilience4j: DEBUG
