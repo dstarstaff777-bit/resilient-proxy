@@ -76,4 +76,4 @@ logging:
   pattern:
     console: "%d{HH:mm:ss.SSS} %-5level [%X{requestId:-no-id}] %logger{36} - %msg%n"
   level:
-    io.github.resilience4j: DEBUG
+    io.github.resilience4j: WARN

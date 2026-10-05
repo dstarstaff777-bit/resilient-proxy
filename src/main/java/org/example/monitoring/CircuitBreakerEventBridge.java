@@ -1,6 +1,7 @@
 package org.example.monitoring;
 
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
@@ -9,6 +10,7 @@ import java.time.Instant;
 
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 
+@Slf4j
 @Component
 public class CircuitBreakerEventBridge {
 
@@ -21,11 +23,17 @@ public class CircuitBreakerEventBridge {
     }
 
     private void subscribeTo(CircuitBreaker circuitBreaker) {
-        circuitBreaker.getEventPublisher().onStateTransition(event -> sink.tryEmitNext(new CircuitBreakerEventDto(
-                circuitBreaker.getName(),
-                event.getStateTransition().getFromState().name(),
-                event.getStateTransition().getToState().name(),
-                Instant.now())));
+        circuitBreaker.getEventPublisher().onStateTransition(event -> {
+            log.info("CircuitBreaker '{}' {} -> {}",
+                    circuitBreaker.getName(),
+                    event.getStateTransition().getFromState(),
+                    event.getStateTransition().getToState());
+            sink.tryEmitNext(new CircuitBreakerEventDto(
+                    circuitBreaker.getName(),
+                    event.getStateTransition().getFromState().name(),
+                    event.getStateTransition().getToState().name(),
+                    Instant.now()));
+        });
     }
 
     public Flux<CircuitBreakerEventDto> stream() {
